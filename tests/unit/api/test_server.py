@@ -6,8 +6,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from nightscout_backup_bot.api.server import app
+from nightscout_backup_bot.config import settings
 
 client = TestClient(app)
+
+# Test API key for authentication
+TEST_API_KEY = "test-api-key-12345"
 
 
 def test_health_check() -> None:
@@ -20,7 +24,10 @@ def test_health_check() -> None:
 @pytest.mark.asyncio
 async def test_create_backup_success() -> None:
     """Test backup endpoint with successful backup."""
-    with patch("nightscout_backup_bot.api.server.backup_service") as mock_service:
+    with (
+        patch("nightscout_backup_bot.api.server.backup_service") as mock_service,
+        patch.object(settings, "backup_api_key", TEST_API_KEY),
+    ):
         mock_service.execute_backup_api = AsyncMock(
             return_value={
                 "success": True,
@@ -34,7 +41,7 @@ async def test_create_backup_success() -> None:
             }
         )
 
-        response = client.post("/backup")
+        response = client.post("/backup", headers={"Authorization": f"Bearer {TEST_API_KEY}"})
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -46,10 +53,13 @@ async def test_create_backup_success() -> None:
 @pytest.mark.asyncio
 async def test_create_backup_failure() -> None:
     """Test backup endpoint with failure."""
-    with patch("nightscout_backup_bot.api.server.backup_service") as mock_service:
+    with (
+        patch("nightscout_backup_bot.api.server.backup_service") as mock_service,
+        patch.object(settings, "backup_api_key", TEST_API_KEY),
+    ):
         mock_service.execute_backup_api = AsyncMock(side_effect=Exception("Backup failed"))
 
-        response = client.post("/backup")
+        response = client.post("/backup", headers={"Authorization": f"Bearer {TEST_API_KEY}"})
         assert response.status_code == 500
         assert "Backup failed" in response.json()["detail"]
         mock_service.execute_backup_api.assert_called_once()
@@ -58,10 +68,13 @@ async def test_create_backup_failure() -> None:
 @pytest.mark.asyncio
 async def test_test_connections_success() -> None:
     """Test connections endpoint with successful tests."""
-    with patch("nightscout_backup_bot.api.server.backup_service") as mock_service:
+    with (
+        patch("nightscout_backup_bot.api.server.backup_service") as mock_service,
+        patch.object(settings, "backup_api_key", TEST_API_KEY),
+    ):
         mock_service.test_connections = AsyncMock(return_value={"mongodb": True, "s3": True})
 
-        response = client.get("/test-connections")
+        response = client.get("/test-connections", headers={"Authorization": f"Bearer {TEST_API_KEY}"})
         assert response.status_code == 200
         data = response.json()
         assert data["mongodb"] is True
@@ -72,10 +85,38 @@ async def test_test_connections_success() -> None:
 @pytest.mark.asyncio
 async def test_test_connections_failure() -> None:
     """Test connections endpoint with failure."""
-    with patch("nightscout_backup_bot.api.server.backup_service") as mock_service:
+    with (
+        patch("nightscout_backup_bot.api.server.backup_service") as mock_service,
+        patch.object(settings, "backup_api_key", TEST_API_KEY),
+    ):
         mock_service.test_connections = AsyncMock(side_effect=Exception("Connection test failed"))
 
-        response = client.get("/test-connections")
+        response = client.get("/test-connections", headers={"Authorization": f"Bearer {TEST_API_KEY}"})
         assert response.status_code == 500
         assert "Connection test failed" in response.json()["detail"]
         mock_service.test_connections.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_create_backup_missing_auth() -> None:
+    """Test backup endpoint without authentication."""
+    with patch.object(settings, "backup_api_key", TEST_API_KEY):
+        response = client.post("/backup")
+        assert response.status_code == 403  # FastAPI HTTPBearer returns 403 for missing auth
+
+
+@pytest.mark.asyncio
+async def test_create_backup_invalid_auth() -> None:
+    """Test backup endpoint with invalid API key."""
+    with patch.object(settings, "backup_api_key", TEST_API_KEY):
+        response = client.post("/backup", headers={"Authorization": "Bearer wrong-key"})
+        assert response.status_code == 401
+        assert "Invalid API key" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_test_connections_missing_auth() -> None:
+    """Test connections endpoint without authentication."""
+    with patch.object(settings, "backup_api_key", TEST_API_KEY):
+        response = client.get("/test-connections")
+        assert response.status_code == 403  # FastAPI HTTPBearer returns 403 for missing auth

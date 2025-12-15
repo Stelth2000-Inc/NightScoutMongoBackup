@@ -79,6 +79,9 @@ def mock_settings() -> Settings:
             "bot_pm2_ssh_host": None,
             "bot_pm2_ssh_key_path": None,
             "bot_pm2_cmd": "npx pm2",
+            "backup_api_cors_origins": "http://localhost:3000",
+            "backup_api_key": "test-api-key-12345",
+            "enable_api_in_bot": False,
         }
     )
 
