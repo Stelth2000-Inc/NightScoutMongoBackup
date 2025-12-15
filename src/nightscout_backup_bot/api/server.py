@@ -33,7 +33,7 @@ backup_service = BackupService()
 security = HTTPBearer()
 
 
-async def verify_api_key(
+def verify_api_key(
     authorization: HTTPAuthorizationCredentials = Depends(security),
 ) -> None:
     """
