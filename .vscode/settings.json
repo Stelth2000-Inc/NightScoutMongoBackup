@@ -1,8 +1,4 @@
 {
-    "sonarlint.connectedMode.project": {
-        "connectionId": "dustin-lennon",
-        "projectKey": "dustin-lennon_NightScoutMongoBackup"
-    },
     "search.exclude": {
         "**/node_modules": true,
         "**/bower_components": true,
@@ -13,4 +9,8 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "stelth2000-inc",
+        "projectKey": "Stelth2000-Inc_NightScoutMongoBackup"
+    },
 }
