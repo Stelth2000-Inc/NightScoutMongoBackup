@@ -60,14 +60,27 @@ jobs:
             git checkout main
             git pull origin main
 
+            # 🧠 Make sure Node & npm are available for dotenv-vault
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            # Pull latest environment variables from dotenv-vault
+            echo "🔐 Pulling environment variables from dotenv-vault..."
+            if [ -f ".env.me" ] || [ -f ".env.vault" ]; then
+              if npx --yes dotenv-vault@latest pull production 2>/dev/null; then
+                echo "✅ Successfully pulled environment variables from dotenv-vault"
+              else
+                echo "⚠️  dotenv-vault pull failed (this is okay if not using dotenv-vault)"
+                echo "ℹ️  Will continue with existing .env file"
+              fi
+            else
+              echo "ℹ️  No .env.me or .env.vault found, skipping dotenv-vault pull"
+            fi
+
             # Activate poetry environment and install dependencies
             echo "📚 Installing dependencies..."
             export PATH="$HOME/.local/bin:$PATH"
             poetry install --no-interaction --no-root --only main
-
-            # 🧠 Make sure Node & PM2 are available
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
             # Restart the service with PM2
             echo "🔄 Restarting application..."

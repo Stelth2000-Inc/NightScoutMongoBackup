@@ -96,6 +96,9 @@ class Settings(BaseSettings):
     backup_api_cors_origins: str = Field(
         "http://localhost:3000", description="Comma-separated list of allowed CORS origins for the backup API"
     )
+    backup_api_key: str = Field(
+        "", description="API key for authenticating requests to the backup API. Required for API endpoints."
+    )
     enable_api_in_bot: bool = Field(
         False,
         description="If True, run the API server in the same process as the bot (background thread). If False, run API as separate process.",
