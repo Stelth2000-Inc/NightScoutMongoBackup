@@ -1,14 +1,34 @@
 """Configuration module for NightScout Backup Bot using Pydantic Settings."""
 
+import os
 from enum import Enum
+from pathlib import Path
 from typing import ClassVar
 
 from dotenv_vault import load_dotenv  # type: ignore[import-untyped]
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Load environment variables from .env file or .env.vault (if DOTENV_KEY is set)
-_ = load_dotenv()
+# Determine which .env file to load based on NODE_ENV
+# Check NODE_ENV from environment first (before loading any .env file)
+PROD_ENV_FILE = ".env.production"
+DEFAULT_ENV_FILE = ".env"
+
+node_env = os.environ.get("NODE_ENV", "development").lower()
+env_file = DEFAULT_ENV_FILE
+
+# Load environment variables with proper precedence
+if node_env == "production":
+    prod_env_file = Path(PROD_ENV_FILE)
+    # Always load .env first (base/common variables)
+    load_dotenv(dotenv_path=DEFAULT_ENV_FILE, override=False)
+    # Then load .env.production if it exists (production-specific overrides)
+    if prod_env_file.exists():
+        load_dotenv(dotenv_path=PROD_ENV_FILE, override=True)
+        env_file = PROD_ENV_FILE  # Use for Pydantic Settings
+else:
+    # Load .env file or .env.vault (if DOTENV_KEY is set)
+    load_dotenv()
 
 
 class CompressionMethod(str, Enum):
@@ -22,7 +42,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables and .env file."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_file=".env",
+        env_file=env_file,  # Use .env.production if in production, otherwise .env
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
