@@ -19,17 +19,17 @@ env_file = DEFAULT_ENV_FILE
 
 # Load environment variables with proper precedence
 if node_env == "production":
+    # In production, dotenv-vault creates .env.production via "dotenv-vault pull production"
+    # Only load .env.production, not .env
     prod_env_file = Path(PROD_ENV_FILE)
-    default_env_file = Path(DEFAULT_ENV_FILE)
-    # Always load .env first (base/common variables) if it exists
-    if default_env_file.exists():
-        load_dotenv(dotenv_path=str(default_env_file.resolve()), override=False)
-    # Then load .env.production if it exists (production-specific overrides)
     if prod_env_file.exists():
         load_dotenv(dotenv_path=str(prod_env_file.resolve()), override=True)
         env_file = PROD_ENV_FILE  # Use for Pydantic Settings
+    # If .env.production doesn't exist, let dotenv-vault handle it (it will use .env.vault if DOTENV_KEY is set)
+    else:
+        load_dotenv()
 else:
-    # Load .env file or .env.vault (if DOTENV_KEY is set)
+    # In development, load .env file or .env.vault (if DOTENV_KEY is set)
     load_dotenv()
 
 
