@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          # Use RELEASE_TOKEN PAT to bypass branch protection rules
+          # Create a PAT with 'repo' scope and add it as RELEASE_TOKEN secret
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Configure git for semantic-release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Configure git to use the PAT token for pushing
+          git remote set-url origin https://${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run semantic-release
+        env:
+          # Use RELEASE_TOKEN PAT to bypass branch protection rules
+          # The PAT needs 'repo' scope and should be added as RELEASE_TOKEN secret
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: npm run semantic-release
