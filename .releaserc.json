@@ -10,7 +10,7 @@
       }
     ],
     [
-      "./scripts/semantic-release-python",
+      "./scripts/semantic-release-python.js",
       {
         "botVersionFile": "src/nightscout_backup_bot/__init__.py",
         "apiVersionFile": "src/nightscout_backup_bot/api/__init__.py",
