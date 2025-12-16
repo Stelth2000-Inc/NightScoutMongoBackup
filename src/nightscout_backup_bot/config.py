@@ -20,8 +20,10 @@ env_file = DEFAULT_ENV_FILE
 # Load environment variables with proper precedence
 if node_env == "production":
     prod_env_file = Path(PROD_ENV_FILE)
-    # Always load .env first (base/common variables)
-    load_dotenv(dotenv_path=DEFAULT_ENV_FILE, override=False)
+    default_env_file = Path(DEFAULT_ENV_FILE)
+    # Always load .env first (base/common variables) if it exists
+    if default_env_file.exists():
+        load_dotenv(dotenv_path=DEFAULT_ENV_FILE, override=False)
     # Then load .env.production if it exists (production-specific overrides)
     if prod_env_file.exists():
         load_dotenv(dotenv_path=PROD_ENV_FILE, override=True)
