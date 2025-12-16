@@ -7,13 +7,14 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from ..config import settings
 from ..logging_config import StructuredLogger
 from ..services.backup_service import BackupService
+from . import __version__ as api_version
 
 logger = StructuredLogger("api.server")
 
 app = FastAPI(
     title="NightScout Backup API",
     description="HTTP API for triggering MongoDB backups",
-    version="1.0.0",
+    version=api_version,
 )
 
 # Configure CORS - allow origins from settings
