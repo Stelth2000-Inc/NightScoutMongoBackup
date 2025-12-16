@@ -23,10 +23,10 @@ if node_env == "production":
     default_env_file = Path(DEFAULT_ENV_FILE)
     # Always load .env first (base/common variables) if it exists
     if default_env_file.exists():
-        load_dotenv(dotenv_path=DEFAULT_ENV_FILE, override=False)
+        load_dotenv(dotenv_path=str(default_env_file.resolve()), override=False)
     # Then load .env.production if it exists (production-specific overrides)
     if prod_env_file.exists():
-        load_dotenv(dotenv_path=PROD_ENV_FILE, override=True)
+        load_dotenv(dotenv_path=str(prod_env_file.resolve()), override=True)
         env_file = PROD_ENV_FILE  # Use for Pydantic Settings
 else:
     # Load .env file or .env.vault (if DOTENV_KEY is set)
