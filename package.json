@@ -9,9 +9,17 @@
   "dependencies": {
     "dotenv-vault": "^1.27.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^23.1.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "sync-versions": "node scripts/sync_versions.js",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
