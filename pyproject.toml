@@ -29,7 +29,7 @@ pytest-asyncio = "^0.24"
 pytest-cov = "^5.0"
 moto = {extras = ["s3"], version = "^5.0"}
 ruff = "^0.6"
-black = "^24.0"
+black = "^26.3"
 mypy = "^1.11"
 boto3-stubs = {extras = ["s3"], version = "^1.35"}
 pre-commit = "^4.4.0"
