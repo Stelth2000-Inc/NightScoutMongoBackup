@@ -10,11 +10,11 @@
     "dotenv-vault": "^1.27.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/cli": "^20.4.3",
+    "@commitlint/config-conventional": "^20.4.3",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "semantic-release": "^25.0.2"
+    "semantic-release": "^25.0.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
