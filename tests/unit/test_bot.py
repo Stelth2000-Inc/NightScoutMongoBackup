@@ -255,32 +255,13 @@ async def test_nightly_backup_no_thread_management_cog() -> None:
 
 @pytest.mark.asyncio
 async def test_before_nightly_backup() -> None:
-    """Test before_nightly_backup waits until scheduled time."""
-    import datetime as dt_module
-
+    """Test before_nightly_backup waits for the bot to be ready."""
     bot = NightScoutBackupBot()
     bot.wait_until_ready = AsyncMock()
 
-    with (
-        patch("nightscout_backup_bot.bot.settings") as mock_settings,
-        patch("nightscout_backup_bot.bot.asyncio.sleep") as mock_sleep,
-    ):
-        mock_settings.backup_hour = 2
-        mock_settings.backup_minute = 0
+    await bot.before_nightly_backup()
 
-        # Mock datetime.now to return a fixed time (naive datetime, uses server timezone)
-        fixed_now = dt_module.datetime(2024, 1, 15, 1, 0, 0)
-        with patch("nightscout_backup_bot.bot.datetime.datetime") as mock_datetime:
-            mock_datetime.now.return_value = fixed_now
-            mock_datetime.timedelta = dt_module.timedelta
-
-            # Execute before_nightly_backup
-            await bot.before_nightly_backup()
-
-        # Verify wait_until_ready was called
-        assert bot.wait_until_ready.called
-        # Verify sleep was called
-        mock_sleep.assert_called_once()
+    bot.wait_until_ready.assert_called_once()
 
 
 @pytest.mark.asyncio
