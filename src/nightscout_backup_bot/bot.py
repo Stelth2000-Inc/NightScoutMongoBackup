@@ -1,7 +1,7 @@
 """Discord bot initialization and setup."""
 
-import asyncio
 import datetime
+import zoneinfo
 from collections.abc import Awaitable, Callable
 from typing import cast, override
 
@@ -81,7 +81,13 @@ class NightScoutBackupBot(commands.Bot):
             user_id=interaction.author.id,
         )
 
-    @tasks.loop(hours=24)
+    @tasks.loop(
+        time=datetime.time(
+            hour=settings.backup_hour,
+            minute=settings.backup_minute,
+            tzinfo=zoneinfo.ZoneInfo("America/New_York"),
+        )
+    )
     async def nightly_backup(self) -> None:
         """Execute nightly backup at scheduled time."""
         try:
@@ -136,32 +142,8 @@ class NightScoutBackupBot(commands.Bot):
 
     @nightly_backup.before_loop
     async def before_nightly_backup(self) -> None:
-        """Wait until bot is ready and it's the scheduled time."""
+        """Wait until bot is ready before starting the scheduled backup loop."""
         await self.wait_until_ready()
-
-        # Calculate time until next backup using UTC to avoid DST shifts
-        now = datetime.datetime.now(datetime.UTC)
-        target_time = now.replace(
-            hour=settings.backup_hour,
-            minute=settings.backup_minute,
-            second=0,
-            microsecond=0,
-        )
-
-        # If target time has passed today, schedule for tomorrow
-        if now > target_time:
-            target_time += datetime.timedelta(days=1)
-
-        # Wait until target time
-        wait_seconds = (target_time - now).total_seconds()
-        logger.info(
-            "Nightly backup scheduled",
-            next_run=target_time.isoformat(),
-            wait_seconds=wait_seconds,
-        )
-
-        await self.wait_until_ready()  # Ensure bot is fully ready
-        await asyncio.sleep(wait_seconds)
 
     def load_cogs(self) -> None:
         """Load all cogs."""

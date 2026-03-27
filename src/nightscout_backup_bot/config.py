@@ -74,7 +74,7 @@ class Settings(BaseSettings):
 
     # Backup Configuration
     enable_nightly_backup: bool = Field(True, description="Enable/disable scheduled nightly backups")
-    backup_hour: int = Field(7, ge=0, le=23, description="Hour for nightly backup in UTC (24-hour format)")
+    backup_hour: int = Field(2, ge=0, le=23, description="Hour for nightly backup in Eastern time (24-hour format)")
     backup_minute: int = Field(0, ge=0, le=59, description="Minute for nightly backup")
     compression_method: CompressionMethod = Field(
         CompressionMethod.GZIP, description="Compression method: 'gzip' (default) or 'brotli'"
