@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.2...v1.0.3) (2026-03-29)
+
+
+### Bug Fixes
+
+* update deployment health check from port 8000 to 9191 ([e6c5925](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/e6c592502be7d83325b028b02d43735438104a7e))
+
 ## [1.0.2](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.1...v1.0.2) (2026-03-29)
 
 

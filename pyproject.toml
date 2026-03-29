@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nightscout-backup-bot"
-version = "2.1.2"
+version = "2.1.3"
 description = "NightScout MongoDB backup bot for Discord with S3 storage"
 authors = ["Dustin Lennon <dustin.lennon81@gmail.com>"]
 readme = "README.md"
