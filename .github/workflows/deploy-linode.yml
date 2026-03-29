@@ -108,7 +108,7 @@ jobs:
             
             # Test API health endpoint
             echo "🏥 Testing API health endpoint..."
-            if curl -f -s http://localhost:8000/health > /dev/null; then
+            if curl -f -s http://localhost:9191/health > /dev/null; then
               echo "✅ API health check passed"
             else
               echo "⚠️  API health check failed (may still be starting)"
@@ -145,7 +145,7 @@ jobs:
             fi
             
             # Test API endpoint
-            if curl -f -s http://localhost:8000/health > /dev/null; then
+            if curl -f -s http://localhost:9191/health > /dev/null; then
               echo "✅ API is responding"
             else
               echo "⚠️  API health check failed"
