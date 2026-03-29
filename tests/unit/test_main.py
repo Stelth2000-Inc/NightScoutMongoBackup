@@ -28,6 +28,8 @@ class TestRunAPIServer:
             patch("nightscout_backup_bot.main.settings") as mock_settings,
         ):
             mock_settings.sentry_dsn = None
+            mock_settings.api_host = "127.0.0.1"
+            mock_settings.api_port = 9191
             # Mock event loop to avoid blocking
             mock_loop = MagicMock()
             mock_new_loop.return_value = mock_loop
@@ -40,7 +42,7 @@ class TestRunAPIServer:
             # Verify logger was called
             assert mock_logger.info.call_count >= 1
             # Verify Config was created with correct parameters
-            mock_config_class.assert_called_once_with(mock_app, host="0.0.0.0", port=8000, log_level="info")
+            mock_config_class.assert_called_once_with(mock_app, host="127.0.0.1", port=9191, log_level="info")
             # Verify Server was created with config
             mock_server_class.assert_called_once_with(mock_config)
             # Verify event loop was set up and server.serve was called

@@ -31,8 +31,8 @@ def main() -> None:
         except Exception as e:
             logger.warning("Failed to initialize Sentry", error=str(e))
 
-    host = "0.0.0.0"
-    port = 8000
+    host = settings.api_host
+    port = settings.api_port
 
     logger.info("Starting NightScout Backup API server", host=host, port=port, environment=settings.node_env)
 
