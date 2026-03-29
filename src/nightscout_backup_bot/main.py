@@ -51,7 +51,7 @@ def _run_api_server() -> None:
         logger.info("Starting NightScout Backup API server in background thread", port=8000)
 
         # Use uvicorn's Server class to have more control over the event loop
-        config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+        config = uvicorn.Config(app, host=settings.api_host, port=settings.api_port, log_level="info")
         server = uvicorn.Server(config)
         loop.run_until_complete(server.serve())
     except Exception as e:

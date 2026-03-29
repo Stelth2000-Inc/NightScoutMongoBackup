@@ -113,6 +113,8 @@ class Settings(BaseSettings):
     bot_pm2_cmd: str = Field("npx pm2", description="PM2 command/path for the bot")
 
     # Backup API Configuration
+    api_host: str = Field("127.0.0.1", description="Host address for the backup API server")
+    api_port: int = Field(9191, ge=1, le=65535, description="Port for the backup API server")
     backup_api_cors_origins: str = Field(
         "http://localhost:3000", description="Comma-separated list of allowed CORS origins for the backup API"
     )
