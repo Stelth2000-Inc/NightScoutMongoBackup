@@ -6,6 +6,7 @@ import threading
 
 import uvicorn
 
+from . import __version__
 from .bot import create_bot
 from .config import settings
 from .logging_config import StructuredLogger, setup_logging
@@ -60,7 +61,7 @@ def main() -> None:
     """Main entry point for the bot."""
     setup_logging()
 
-    logger.info("Starting NightScout Backup Bot", version="2.0.0", environment=settings.node_env)
+    logger.info("Starting NightScout Backup Bot", version=__version__, environment=settings.node_env)
 
     # Start API server in background thread if enabled
     # The API server thread will create its own event loop, so we start it first
