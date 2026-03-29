@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.0...v1.0.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* remove UvicornIntegration removed in sentry-sdk 2.x ([7d9cacb](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/7d9cacb9e7edb2cb4c3876ccb06b6be43cc45f19))
+* wire API host/port through settings to resolve SonarQube S8392 ([a255c04](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/a255c0450fbd928734488ca5fc400492a79d2c49))
+
 # 1.0.0 (2026-03-29)
 
 
