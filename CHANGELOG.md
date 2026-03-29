@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.1...v1.0.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* use __version__ instead of hardcoded version string in main.py ([bdf191e](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/bdf191e3c140659674da3cd375514be9b3efc627))
+
 ## [1.0.1](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.0...v1.0.1) (2026-03-29)
 
 
