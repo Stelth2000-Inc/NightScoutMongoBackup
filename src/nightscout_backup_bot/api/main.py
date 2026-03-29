@@ -18,7 +18,6 @@ def main() -> None:
         try:
             import sentry_sdk
             from sentry_sdk.integrations.fastapi import FastApiIntegration
-            from sentry_sdk.integrations.uvicorn import UvicornIntegration  # type: ignore[import-not-found]
 
             sentry_sdk.init(
                 dsn=settings.sentry_dsn,
@@ -26,15 +25,14 @@ def main() -> None:
                 traces_sample_rate=1.0 if not settings.is_production else 0.1,
                 integrations=[
                     FastApiIntegration(),
-                    UvicornIntegration(),
                 ],
             )
             logger.info("Sentry initialized", environment=settings.node_env)
         except Exception as e:
             logger.warning("Failed to initialize Sentry", error=str(e))
 
-    host = "0.0.0.0"
-    port = 8000
+    host = settings.api_host
+    port = settings.api_port
 
     logger.info("Starting NightScout Backup API server", host=host, port=port, environment=settings.node_env)
 
