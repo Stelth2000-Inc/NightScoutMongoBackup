@@ -22,6 +22,8 @@ class TestMain:
             patch("nightscout_backup_bot.api.main.settings") as mock_settings,
         ):
             mock_settings.node_env = "development"
+            mock_settings.api_host = "127.0.0.1"
+            mock_settings.api_port = 9191
 
             main()
 
@@ -32,15 +34,15 @@ class TestMain:
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args
             assert "Starting NightScout Backup API server" in call_args[0][0]
-            assert call_args[1]["host"] == "0.0.0.0"
-            assert call_args[1]["port"] == 8000
+            assert call_args[1]["host"] == "127.0.0.1"
+            assert call_args[1]["port"] == 9191
             assert call_args[1]["environment"] == "development"
 
             # Verify uvicorn.run was called with correct parameters
             mock_uvicorn.run.assert_called_once_with(
                 mock_app,
-                host="0.0.0.0",
-                port=8000,
+                host="127.0.0.1",
+                port=9191,
                 log_level="info",
             )
 
@@ -86,14 +88,16 @@ class TestMain:
             patch("nightscout_backup_bot.api.main.settings") as mock_settings,
         ):
             mock_settings.node_env = "development"
+            mock_settings.api_host = "127.0.0.1"
+            mock_settings.api_port = 9191
 
             main()
 
             # Verify uvicorn.run was called with exact parameters
             mock_uvicorn.run.assert_called_once()
             call_kwargs = mock_uvicorn.run.call_args[1]
-            assert call_kwargs["host"] == "0.0.0.0"
-            assert call_kwargs["port"] == 8000
+            assert call_kwargs["host"] == "127.0.0.1"
+            assert call_kwargs["port"] == 9191
             assert call_kwargs["log_level"] == "info"
             assert mock_uvicorn.run.call_args[0][0] == mock_app
 
