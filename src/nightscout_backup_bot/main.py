@@ -26,7 +26,6 @@ def _run_api_server() -> None:
             try:
                 import sentry_sdk
                 from sentry_sdk.integrations.fastapi import FastApiIntegration
-                from sentry_sdk.integrations.uvicorn import UvicornIntegration  # type: ignore[import-not-found]
 
                 sentry_sdk.init(
                     dsn=settings.sentry_dsn,
@@ -34,7 +33,6 @@ def _run_api_server() -> None:
                     traces_sample_rate=1.0 if not settings.is_production else 0.1,
                     integrations=[
                         FastApiIntegration(),
-                        UvicornIntegration(),
                     ],
                 )
                 logger.info("Sentry initialized in API server thread", environment=settings.node_env)
