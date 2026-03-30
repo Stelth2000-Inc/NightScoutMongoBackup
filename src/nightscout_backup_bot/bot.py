@@ -1,12 +1,13 @@
 """Discord bot initialization and setup."""
 
+import asyncio
 import datetime
 import zoneinfo
 from collections.abc import Awaitable, Callable
 from typing import cast, override
 
 import disnake
-from disnake.ext import commands, tasks
+from disnake.ext import commands
 
 from nightscout_backup_bot.config import settings
 from nightscout_backup_bot.logging_config import StructuredLogger, setup_logging
@@ -21,6 +22,7 @@ class NightScoutBackupBot(commands.Bot):
 
     backup_service: BackupService
     pm2_process_manager: PM2ProcessManager
+    _scheduler_task: "asyncio.Task[None] | None"
 
     def __init__(self) -> None:
         """Initialize the bot."""
@@ -37,6 +39,7 @@ class NightScoutBackupBot(commands.Bot):
 
         self.backup_service = BackupService()
         self.pm2_process_manager = PM2ProcessManager()
+        self._scheduler_task = None
 
     async def on_ready(self) -> None:
         """Called when bot is ready."""
@@ -47,12 +50,12 @@ class NightScoutBackupBot(commands.Bot):
             guilds=len(self.guilds),
         )
 
-        # Start nightly backup task if enabled
+        # Start nightly backup scheduler if enabled
         if settings.enable_nightly_backup:
-            if not self.nightly_backup.is_running():
-                _ = self.nightly_backup.start()
+            if self._scheduler_task is None or self._scheduler_task.done():
+                self._scheduler_task = asyncio.create_task(self._nightly_backup_scheduler())
                 logger.info(
-                    "Nightly backup task started",
+                    "Nightly backup scheduler started",
                     hour=settings.backup_hour,
                     minute=settings.backup_minute,
                 )
@@ -81,15 +84,37 @@ class NightScoutBackupBot(commands.Bot):
             user_id=interaction.author.id,
         )
 
-    @tasks.loop(
-        time=datetime.time(
-            hour=settings.backup_hour,
-            minute=settings.backup_minute,
-            tzinfo=zoneinfo.ZoneInfo("America/New_York"),
-        )
-    )
+    async def _nightly_backup_scheduler(self) -> None:
+        """Sleep until the next configured Eastern time, then run the backup — forever.
+
+        Using datetime.datetime.now(ZoneInfo(...)) gives ZoneInfo a concrete date so it can
+        resolve EST vs. EDT correctly.  The offset is recomputed on every iteration, meaning
+        DST transitions are handled automatically without a bot restart.
+        """
+        await self.wait_until_ready()
+        eastern = zoneinfo.ZoneInfo("America/New_York")
+        while True:
+            now = datetime.datetime.now(eastern)
+            target = now.replace(
+                hour=settings.backup_hour,
+                minute=settings.backup_minute,
+                second=0,
+                microsecond=0,
+            )
+            if target <= now:
+                target += datetime.timedelta(days=1)
+
+            wait_seconds = (target - now).total_seconds()
+            logger.debug(
+                "Nightly backup sleeping until next run",
+                next_run_eastern=str(target),
+                wait_seconds=round(wait_seconds),
+            )
+            await asyncio.sleep(wait_seconds)
+            await self.nightly_backup()
+
     async def nightly_backup(self) -> None:
-        """Execute nightly backup at scheduled time."""
+        """Execute nightly backup."""
         try:
             logger.info("Starting nightly backup")
 
@@ -139,11 +164,6 @@ class NightScoutBackupBot(commands.Bot):
 
         except Exception as e:
             logger.error("Nightly backup failed", error=str(e))
-
-    @nightly_backup.before_loop
-    async def before_nightly_backup(self) -> None:
-        """Wait until bot is ready before starting the scheduled backup loop."""
-        await self.wait_until_ready()
 
     def load_cogs(self) -> None:
         """Load all cogs."""
