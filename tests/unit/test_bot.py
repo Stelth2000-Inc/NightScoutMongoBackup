@@ -1,26 +1,14 @@
 """Unit tests for bot initialization and configuration."""
 
-import datetime
+import asyncio
 from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import disnake
 import pytest
 
-from nightscout_backup_bot.bot import NightScoutBackupBot, _get_backup_time_utc, create_bot
+from nightscout_backup_bot.bot import NightScoutBackupBot, create_bot
 from nightscout_backup_bot.config import settings
-
-
-def test_get_backup_time_utc_returns_utc_aware_time() -> None:
-    """_get_backup_time_utc must return a UTC-aware time compatible with disnake tasks.loop."""
-    result = _get_backup_time_utc(2, 0)
-
-    assert isinstance(result, datetime.time)
-    assert result.tzinfo == datetime.UTC, "Result must be UTC-aware (not ZoneInfo)"
-    assert result.utcoffset() == datetime.timedelta(0), "UTC offset must be zero"
-    # 2 AM Eastern is either 6 AM or 7 AM UTC depending on DST
-    assert result.hour in (6, 7), f"Expected 6 or 7 UTC for 2 AM Eastern, got {result.hour}"
-    assert result.minute == 0
 
 
 @pytest.fixture(autouse=True)
@@ -46,6 +34,9 @@ async def test_bot_initialization() -> None:
     # Check backup service is initialized
     assert bot.backup_service is not None, "Backup service should be initialized"
 
+    # Scheduler task should not be running yet
+    assert bot._scheduler_task is None
+
 
 @pytest.mark.asyncio
 async def test_create_bot_function() -> None:
@@ -59,28 +50,54 @@ async def test_create_bot_function() -> None:
 
 @pytest.mark.asyncio
 async def test_bot_on_ready_event(caplog: pytest.LogCaptureFixture) -> None:
-    """Test on_ready event handler."""
+    """Test on_ready starts the nightly backup scheduler when enabled."""
     bot = NightScoutBackupBot()
 
-    # Mock the user property and guilds
     mock_user = MagicMock()
     mock_user.id = 123456789
     mock_user.__str__ = MagicMock(return_value="TestBot#1234")  # type: ignore[method-assign]
 
     mock_guilds = [MagicMock(), MagicMock()]
 
-    with patch.object(type(bot), "user", new=mock_user), patch.object(type(bot), "guilds", new=mock_guilds):
-        # Mock nightly backup task
-        bot.nightly_backup = MagicMock()  # type: ignore[method-assign]
-        bot.nightly_backup.is_running.return_value = False
-        bot.nightly_backup.start = MagicMock()
+    mock_task = MagicMock(spec=asyncio.Task)
 
-        # Call on_ready
+    with (
+        patch.object(type(bot), "user", new=mock_user),
+        patch.object(type(bot), "guilds", new=mock_guilds),
+        patch("nightscout_backup_bot.bot.asyncio.create_task", return_value=mock_task) as mock_create_task,
+    ):
         await bot.on_ready()
 
-        # Verify nightly backup was started if enabled
         if settings.enable_nightly_backup:
-            bot.nightly_backup.start.assert_called_once()
+            mock_create_task.assert_called_once()
+            assert bot._scheduler_task is mock_task
+
+
+@pytest.mark.asyncio
+async def test_bot_on_ready_skips_scheduler_if_already_running() -> None:
+    """Test on_ready does not start a second scheduler if one is already running."""
+    bot = NightScoutBackupBot()
+
+    mock_user = MagicMock()
+    mock_user.id = 123456789
+    mock_user.__str__ = MagicMock(return_value="TestBot#1234")  # type: ignore[method-assign]
+
+    mock_guilds = [MagicMock(), MagicMock()]
+
+    # Simulate an already-running task
+    existing_task = MagicMock(spec=asyncio.Task)
+    existing_task.done.return_value = False
+    bot._scheduler_task = existing_task
+
+    with (
+        patch.object(type(bot), "user", new=mock_user),
+        patch.object(type(bot), "guilds", new=mock_guilds),
+        patch("nightscout_backup_bot.bot.asyncio.create_task") as mock_create_task,
+    ):
+        await bot.on_ready()
+
+        mock_create_task.assert_not_called()
+        assert bot._scheduler_task is existing_task
 
 
 @pytest.mark.asyncio
@@ -133,19 +150,65 @@ async def test_bot_cog_loading() -> None:
 
 @pytest.mark.asyncio
 async def test_nightly_backup_task_disabled() -> None:
-    """Test that nightly backup task respects settings."""
+    """Test that nightly backup scheduler respects the enable_nightly_backup setting."""
     bot = NightScoutBackupBot()
 
-    # If nightly backup is disabled in settings, task should not be running
-    # This is handled in on_ready, so we test that behavior
-    if not settings.enable_nightly_backup:
-        bot.nightly_backup = MagicMock()
-        bot.nightly_backup.is_running.return_value = False
+    mock_user = MagicMock()
+    mock_user.id = 123456789
+    mock_user.__str__ = MagicMock(return_value="TestBot#1234")  # type: ignore[method-assign]
+
+    mock_guilds = [MagicMock()]
+
+    with (
+        patch.object(type(bot), "user", new=mock_user),
+        patch.object(type(bot), "guilds", new=mock_guilds),
+        patch("nightscout_backup_bot.bot.settings") as mock_settings,
+        patch("nightscout_backup_bot.bot.asyncio.create_task") as mock_create_task,
+    ):
+        mock_settings.enable_nightly_backup = False
 
         await bot.on_ready()
 
-        # Should not call start if disabled
-        bot.nightly_backup.start.assert_not_called()
+        mock_create_task.assert_not_called()
+        assert bot._scheduler_task is None
+
+
+@pytest.mark.asyncio
+async def test_nightly_backup_scheduler_computes_next_run() -> None:
+    """_nightly_backup_scheduler sleeps until the next Eastern target time then runs the backup."""
+    import datetime
+
+    bot = NightScoutBackupBot()
+    bot.wait_until_ready = AsyncMock()
+    bot.nightly_backup = AsyncMock()  # type: ignore[method-assign]
+
+    # Feed a known "now" so we can assert the sleep duration
+    eastern = datetime.timezone(datetime.timedelta(hours=-4))  # EDT
+    fake_now = datetime.datetime(2026, 3, 30, 2, 30, tzinfo=eastern)  # 30 min past target
+
+    sleep_calls: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        sleep_calls.append(seconds)
+        raise asyncio.CancelledError  # stop the loop after first iteration
+
+    with (
+        patch("nightscout_backup_bot.bot.asyncio.sleep", side_effect=fake_sleep),
+        patch("nightscout_backup_bot.bot.datetime") as mock_dt,
+        patch("nightscout_backup_bot.bot.settings") as mock_settings,
+    ):
+        mock_settings.backup_hour = 2
+        mock_settings.backup_minute = 0
+        mock_dt.datetime.now.return_value = fake_now
+        mock_dt.datetime.side_effect = lambda *a, **kw: datetime.datetime(*a, **kw)
+        mock_dt.timedelta = datetime.timedelta
+
+        with pytest.raises(asyncio.CancelledError):
+            await bot._nightly_backup_scheduler()
+
+    # 30 min past → next target is ~23.5 hours away
+    assert len(sleep_calls) == 1
+    assert 23 * 3600 < sleep_calls[0] < 24 * 3600
 
 
 @pytest.mark.asyncio
@@ -264,17 +327,6 @@ async def test_nightly_backup_no_thread_management_cog() -> None:
 
         # Backup should still complete
         bot.backup_service.execute_backup.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_before_nightly_backup() -> None:
-    """Test before_nightly_backup waits for the bot to be ready."""
-    bot = NightScoutBackupBot()
-    bot.wait_until_ready = AsyncMock()
-
-    await bot.before_nightly_backup()
-
-    bot.wait_until_ready.assert_called_once()
 
 
 @pytest.mark.asyncio
