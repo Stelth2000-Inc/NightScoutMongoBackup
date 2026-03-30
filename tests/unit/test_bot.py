@@ -1,13 +1,26 @@
 """Unit tests for bot initialization and configuration."""
 
+import datetime
 from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import disnake
 import pytest
 
-from nightscout_backup_bot.bot import NightScoutBackupBot, create_bot
+from nightscout_backup_bot.bot import NightScoutBackupBot, _get_backup_time_utc, create_bot
 from nightscout_backup_bot.config import settings
+
+
+def test_get_backup_time_utc_returns_utc_aware_time() -> None:
+    """_get_backup_time_utc must return a UTC-aware time compatible with disnake tasks.loop."""
+    result = _get_backup_time_utc(2, 0)
+
+    assert isinstance(result, datetime.time)
+    assert result.tzinfo == datetime.UTC, "Result must be UTC-aware (not ZoneInfo)"
+    assert result.utcoffset() == datetime.timedelta(0), "UTC offset must be zero"
+    # 2 AM Eastern is either 6 AM or 7 AM UTC depending on DST
+    assert result.hour in (6, 7), f"Expected 6 or 7 UTC for 2 AM Eastern, got {result.hour}"
+    assert result.minute == 0
 
 
 @pytest.fixture(autouse=True)

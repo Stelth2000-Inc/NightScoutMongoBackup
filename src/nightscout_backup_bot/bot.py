@@ -16,6 +16,20 @@ from nightscout_backup_bot.utils.pm2_process_manager import PM2ProcessManager
 logger = StructuredLogger(__name__)
 
 
+def _get_backup_time_utc(hour: int, minute: int) -> datetime.time:
+    """Convert an Eastern backup time to UTC, correctly resolving the current DST offset.
+
+    ZoneInfo cannot determine the UTC offset from a bare datetime.time (no date = no DST
+    context), so passing ZoneInfo to tasks.loop(time=...) causes a TypeError inside disnake's
+    internal time comparison and silently kills the task before it ever fires.  Using a full
+    datetime here gives ZoneInfo the date it needs to pick EST vs. EDT correctly.
+    """
+    eastern = zoneinfo.ZoneInfo("America/New_York")
+    today = datetime.date.today()
+    dt_eastern = datetime.datetime(today.year, today.month, today.day, hour, minute, tzinfo=eastern)
+    return dt_eastern.astimezone(datetime.UTC).timetz()
+
+
 class NightScoutBackupBot(commands.Bot):
     """Custom bot class for NightScout backup operations."""
 
@@ -55,6 +69,7 @@ class NightScoutBackupBot(commands.Bot):
                     "Nightly backup task started",
                     hour=settings.backup_hour,
                     minute=settings.backup_minute,
+                    utc_time=str(self.nightly_backup.time[0]) if self.nightly_backup.time else None,
                 )
 
     async def on_slash_command(self, inter: disnake.ApplicationCommandInteraction["NightScoutBackupBot"]) -> None:
@@ -81,13 +96,7 @@ class NightScoutBackupBot(commands.Bot):
             user_id=interaction.author.id,
         )
 
-    @tasks.loop(
-        time=datetime.time(
-            hour=settings.backup_hour,
-            minute=settings.backup_minute,
-            tzinfo=zoneinfo.ZoneInfo("America/New_York"),
-        )
-    )
+    @tasks.loop(time=_get_backup_time_utc(settings.backup_hour, settings.backup_minute))
     async def nightly_backup(self) -> None:
         """Execute nightly backup at scheduled time."""
         try:
