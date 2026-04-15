@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: List available projects
         if: env.PROJECT_NUMBER == '' || env.PROJECT_NUMBER == null
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         continue-on-error: true
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
@@ -54,7 +54,7 @@ jobs:
 
       - name: Get project ID
         id: project
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
           script: |
@@ -174,7 +174,7 @@ jobs:
 
       - name: Get Status field ID
         id: status-field
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
           script: |
@@ -237,7 +237,7 @@ jobs:
 
       - name: Add issue to project
         if: github.event_name == 'issues' && (github.event.action == 'opened' || github.event.action == 'reopened')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
           script: |
@@ -297,7 +297,7 @@ jobs:
 
       - name: Add PR to project
         if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'ready_for_review')
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
           script: |
@@ -368,7 +368,7 @@ jobs:
 
       - name: Update status on PR merged/closed
         if: github.event_name == 'pull_request' && github.event.action == 'closed'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
           script: |
@@ -445,7 +445,7 @@ jobs:
 
       - name: Update status on issue closed
         if: github.event_name == 'issues' && github.event.action == 'closed'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.ORG_PROJECT_TOKEN }}
           script: |
