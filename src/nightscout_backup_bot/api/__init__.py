@@ -1,6 +1,6 @@
 """API module for HTTP endpoints."""
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 from .server import app
 
