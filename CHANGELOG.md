@@ -14,6 +14,14 @@
 * replace tasks.loop with asyncio scheduler for DST-safe nightly backup ([f238232](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/f238232123f02fb138dd59ab746a9cb7575e9b7f))
 * resolve nightly backup task silently dying due to ZoneInfo TypeError ([df53d11](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/df53d11c075d58045457ac619010a54d01e3c8af))
 
+## [1.0.4](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.3...v1.0.4) (2026-04-22)
+
+
+### Bug Fixes
+
+* replace tasks.loop with asyncio scheduler for DST-safe nightly backup ([f238232](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/f238232123f02fb138dd59ab746a9cb7575e9b7f))
+* resolve nightly backup task silently dying due to ZoneInfo TypeError ([df53d11](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/commit/df53d11c075d58045457ac619010a54d01e3c8af))
+
 ## [1.0.4](https://github.com/Stelth2000-Inc/NightScoutMongoBackup/compare/v1.0.3...v1.0.4) (2026-04-21)
 
 
