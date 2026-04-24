@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Get project ID
         id: project
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const projectNumber = parseInt(process.env.PROJECT_NUMBER || '1');
@@ -57,7 +57,7 @@ jobs:
 
       - name: Get Status field and options
         id: status-field
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const projectNumber = parseInt(process.env.PROJECT_NUMBER || '1');
@@ -122,7 +122,7 @@ jobs:
 
       - name: Update status to In Review
         if: github.event.action == 'ready_for_review' || github.event.action == 'review_requested'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const projectId = '${{ steps.project.outputs.projectId }}';
